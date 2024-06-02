@@ -32,3 +32,152 @@ BEGIN
 
 END
 GO
+
+
+ХМ на регистрацию
+
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [Регистрация] 
+	@Логин nvarchar(50),
+	@Пароль nvarchar(50),
+	@Результат nvarchar(50) output
+	
+AS
+BEGIN
+
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	DECLARE @COUNT int;
+	SELECT @COUNT = COUNT(Логин) FROM Клиент WHERE @Логин = Логин 
+	IF @COUNT=0
+	BEGIN
+	INSERT INTO Пользователь(Логин, Пароль) VALUES (@Логин, @Пароль)
+	SET @Результат = 'Регистрация выполнена успешно!'
+	END
+	ELSE
+	BEGIN
+	SET @Результат = 'Произошла ошибка!'
+	END
+	
+END
+
+
+
+КОД АВТОРИЗАЦИИ
+
+
+try
+{
+    //хранимая на авторизацию пользователя
+    using (SqlConnection connection = new SqlConnection(sqlcon.ConnStr))
+    {
+
+        string vhod = "dbo.Авторизация";
+        SqlCommand command = new SqlCommand(vhod, connection); // создаем и вызываем команду
+        command.CommandType = CommandType.StoredProcedure; // указываем тип хранимой процедуры
+
+        command.Parameters.Add(new SqlParameter("@Логин", textbox_login.Text));
+        command.Parameters.Add(new SqlParameter("@Пароль", textbox_pass.Text));
+
+        SqlParameter Result = new SqlParameter("Результат", SqlDbType.NVarChar, 50);
+        Result.Direction = ParameterDirection.Output;
+        command.Parameters.Add(Result); // добавляем выходной параметр для результата
+        command.ExecuteNonQuery(); // выполняем хранимую процедуру
+
+        MessageBox.Show(Result.Value.ToString()); // выводим значение результата
+
+        if (Result.Value.ToString() == "Вход успешно выполнен!")
+        {
+            //Menu личкаб = new Menu();
+            //личкаб.Show();
+            this.Hide();
+        }
+    }
+}
+catch (SqlException ex)
+{
+    MessageBox.Show($"Произошла ошибка - {ex}");
+}
+catch (Exception ex)
+{
+    MessageBox.Show($"Произошла ошибка - {ex}");
+}
+
+
+
+КОД РЕГИСТРАЦИИ
+
+try
+{
+    using (SqlConnection connection = new SqlConnection(sqlcon.ConnStr))
+    {
+        string vhod = "dbo.Регистрация";
+        SqlCommand command = new SqlCommand(vhod, connection); //создание и вызов команды
+        command.CommandType = CommandType.StoredProcedure; //назначаем тип хп
+
+        command.Parameters.Add(new SqlParameter("@Логин", textbox_login.Text));
+        command.Parameters.Add(new SqlParameter("@Пароль", textbox_pass.Text));
+
+
+        SqlParameter Resalt = new SqlParameter("@Результат", SqlDbType.NVarChar, 50);
+        Resalt.Direction = ParameterDirection.Output;
+        command.Parameters.Add(Resalt); //добавление выходного параметра
+
+        command.ExecuteScalar(); //выполнение хп
+
+        MessageBox.Show(Resalt.Value.ToString());  // значение 
+
+        if (Resalt.Value.ToString() == "Регистрация выполнена успешно!")
+        {
+            this.Close();
+        }
+    }
+}
+catch (SqlException ex)
+{
+    MessageBox.Show($"Произошла ошибка - {ex}");
+}
+catch (Exception ex)
+{
+    MessageBox.Show($"Произошла ошибка - {ex}");
+}
+
+
+МЕТОД ЗАПОЛНЕНИЯ ДАТАГРИД
+
+try
+{
+    using (SqlConnection myCon = new SqlConnection(stringCon))
+    {
+        myCon.Open();
+        if (myCon.State != ConnectionState.Open)
+        {
+            MessageBox.Show("Не удалось установить подключение к базе данных.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return null;
+        }
+
+        using (SqlDataAdapter sda = new SqlDataAdapter(query, myCon))
+        {
+            DataTable dt = new DataTable();
+            sda.Fill(dt);
+            grid.DataSource = dt;
+            return dt;
+        }
+    }
+}
+catch (SqlException ex)
+{
+    MessageBox.Show($"Возникла ошибка при выполнении запроса: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+    return null;
+}
+catch (Exception ex)
+{
+    MessageBox.Show($"Произошла непредвиденная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+    return null;
+}
